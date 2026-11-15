@@ -1,0 +1,12 @@
+# Versions verified in this project's .venv (Python 3.14; previously 3.12)
+# os-ken is pinned to 3.0.2: it ships the `osken-manager` CLI (verified). 4.2.2 was NOT used/tested.
+os-ken==3.0.2
+eventlet==0.41.2
+scikit-learn==1.9.1
+pandas==3.0.6
+numpy==2.5.4
+joblib==1.6.0
+matplotlib==3.11.2
+pytest==9.1.1
+# System packages (apt, not pip): mininet, openvswitch-switch. Mininet is installed for the
+# system Python (/usr/bin/python3), not this venv.

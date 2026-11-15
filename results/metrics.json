@@ -1,0 +1,266 @@
+{
+  "accuracy": 0.7985498786445052,
+  "macro_precision": 0.5658865416949388,
+  "macro_recall": 0.5986611608988256,
+  "macro_f1": 0.5697644451294164,
+  "per_class": {
+    "Analysis": {
+      "precision": 0.021714285714285714,
+      "recall": 0.04668304668304668,
+      "f1-score": 0.029641185647425898,
+      "support": 407.0
+    },
+    "Backdoor": {
+      "precision": 0.04919678714859438,
+      "recall": 0.13031914893617022,
+      "f1-score": 0.07142857142857142,
+      "support": 376.0
+    },
+    "DoS": {
+      "precision": 0.424962852897474,
+      "recall": 0.26,
+      "f1-score": 0.32261703327693175,
+      "support": 1100.0
+    },
+    "Exploits": {
+      "precision": 0.842055899456012,
+      "recall": 0.8181155458356114,
+      "f1-score": 0.829913107783324,
+      "support": 5487.0
+    },
+    "Fuzzers": {
+      "precision": 0.6036249014972419,
+      "recall": 0.7309160305343512,
+      "f1-score": 0.6611998273629693,
+      "support": 4192.0
+    },
+    "Generic": {
+      "precision": 0.9664378337147216,
+      "recall": 0.8335526315789473,
+      "f1-score": 0.8950900741787354,
+      "support": 1520.0
+    },
+    "Normal": {
+      "precision": 0.9493046776232617,
+      "recall": 0.8759916005599627,
+      "f1-score": 0.9111758281761922,
+      "support": 17144.0
+    },
+    "Reconnaissance": {
+      "precision": 0.8151305274374001,
+      "recall": 0.7657657657657657,
+      "f1-score": 0.7896774193548387,
+      "support": 1998.0
+    },
+    "Shellcode": {
+      "precision": 0.4515539305301645,
+      "recall": 0.8487972508591065,
+      "f1-score": 0.5894988066825776,
+      "support": 291.0
+    },
+    "Worms": {
+      "precision": 0.5348837209302325,
+      "recall": 0.6764705882352942,
+      "f1-score": 0.5974025974025974,
+      "support": 34.0
+    },
+    "accuracy": 0.7985498786445052,
+    "macro avg": {
+      "precision": 0.5658865416949388,
+      "recall": 0.5986611608988256,
+      "f1-score": 0.5697644451294164,
+      "support": 32549.0
+    },
+    "weighted avg": {
+      "precision": 0.8346688096828717,
+      "recall": 0.7985498786445052,
+      "f1-score": 0.8132553804007663,
+      "support": 32549.0
+    }
+  },
+  "binary": {
+    "definition": "attack = predicted class != Normal",
+    "accuracy": 0.9100433193032044,
+    "precision": 0.8729152967900053,
+    "recall": 0.9479389808503732,
+    "f1": 0.9088815584738906
+  },
+  "classes": [
+    "Analysis",
+    "Backdoor",
+    "DoS",
+    "Exploits",
+    "Fuzzers",
+    "Generic",
+    "Normal",
+    "Reconnaissance",
+    "Shellcode",
+    "Worms"
+  ],
+  "confusion_matrix": [
+    [
+      19,
+      229,
+      77,
+      12,
+      0,
+      2,
+      60,
+      8,
+      0,
+      0
+    ],
+    [
+      211,
+      49,
+      72,
+      11,
+      9,
+      4,
+      1,
+      13,
+      6,
+      0
+    ],
+    [
+      134,
+      184,
+      286,
+      357,
+      45,
+      11,
+      8,
+      37,
+      34,
+      4
+    ],
+    [
+      159,
+      164,
+      135,
+      4489,
+      103,
+      17,
+      60,
+      248,
+      98,
+      14
+    ],
+    [
+      156,
+      174,
+      34,
+      44,
+      3064,
+      5,
+      647,
+      10,
+      58,
+      0
+    ],
+    [
+      19,
+      31,
+      19,
+      145,
+      18,
+      1267,
+      7,
+      2,
+      11,
+      1
+    ],
+    [
+      28,
+      0,
+      21,
+      161,
+      1811,
+      4,
+      15018,
+      23,
+      78,
+      0
+    ],
+    [
+      149,
+      165,
+      29,
+      98,
+      8,
+      0,
+      3,
+      1530,
+      15,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      5,
+      16,
+      1,
+      16,
+      6,
+      247,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      9,
+      2,
+      0,
+      0,
+      0,
+      0,
+      23
+    ]
+  ],
+  "training_info": {
+    "dataset": "/home/aditya_yadav/Data/Sem 7/SAD/data/processed/unsw_processed.csv",
+    "rows_raw": 257673,
+    "rows_after_dedup": 162744,
+    "train_rows": 130195,
+    "test_rows": 32549,
+    "split": "stratified 80%/20%, seed=42",
+    "model": "RandomForestClassifier",
+    "params": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "class_weight": "balanced_subsample",
+      "criterion": "gini",
+      "max_depth": null,
+      "max_features": "sqrt",
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 2,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 100,
+      "n_jobs": -1,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "excluded_columns": [
+      "id",
+      "attack_cat",
+      "label",
+      "label_binary",
+      "dataset_name",
+      "stcpb",
+      "dtcpb"
+    ],
+    "fit_seconds": 19.8,
+    "versions": {
+      "python": "3.12.3",
+      "sklearn": "1.9.1"
+    }
+  }
+}
