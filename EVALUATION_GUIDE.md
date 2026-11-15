@@ -72,7 +72,8 @@ sudo /usr/bin/python3 topology/mininet_topology.py --auto      # pingAll + norma
 # Terminal 3: watch telemetry
 tail -f logs/flow_stats.jsonl      # and: tail -f logs/mitigations.jsonl
 ```
-Tunables (env vars for the controller): `SDN_MITIGATION=0` (detect only), `SDN_ML_THRESHOLD` (0.9), `SDN_RATE_PPS` (500),
+Tunables (env vars for the controller): `SDN_MITIGATION=0` (detect only), `SDN_ML_THRESHOLD` (0.9),
+`SDN_ML_BLOCK=1` (let ML alerts install drop rules; off by default, see §13), `SDN_RATE_PPS` (500),
 `SDN_RATE_BPS` (1000000 bytes/s), `SDN_MIN_PKTS` (10), `SDN_BLOCK_SECONDS` (60), `SDN_POLL_INTERVAL` (5).
 Safe traffic: `traffic/generate_traffic.py` (TCP "normal" 10 msg/s vs "burst" high-rate load, duration-bounded,
 refuses non-private targets). It is a load pattern, not an attack tool.
@@ -80,13 +81,14 @@ If Mininet leaves state behind after a crash: `sudo mn -c` (removes only Mininet
 
 ## 6. Expected output
 Controller terminal: `Live model loaded: .../live_model.joblib`, `Datapath registered: dpid=0000000000000001`, then every 5 s
-`logged N flow(s)` and lines like `10.0.0.1 ->10.0.0.2 pkts=.. bytes=.. dur=..s p_attack=0.49 pps=10.0 -> normal`.
+`logged N flow(s)` and lines like `10.0.0.1 ->10.0.0.2 pkts=.. bytes=.. dur=..s p_attack=0.66 pps=9.0 -> normal`
+(`-> ALERT(ml)` = ML alert logged but not enforced; `-> ATTACK(rate)` = drop rule installed).
 When the burst (h1 -> h3) starts: `MITIGATION: drop 10.0.0.1 -> 10.0.0.3 for 60s (reasons=rate, ...)`; later polls show
 the `[DROP RULE]` entry. Mininet output: the burst client reports `connection stalled/blocked`, `h1 ping 10.0.0.3` ->
 100% loss, `h1 ping 10.0.0.2` -> 0% loss, and `dump-flows` shows `priority=100,ip,nw_src=10.0.0.1,nw_dst=10.0.0.3 actions=drop`.
 `logs/flow_stats.jsonl`: one JSON per flow: timestamp, dpid, priority, match, features {dur, pkts, bytes, pkts_per_s,
 bytes_per_s, mean_pkt_size}, `classification` {attack_prob, ml_alert, interval_pps, interval_Bps, rate_alert, is_attack,
-reasons, unsw_features} for IPv4 flows (null for ARP etc.), `mitigation` (null, or the installed/already_blocked drop action).
+reasons, enforce, unsw_features} for IPv4 flows (null for ARP etc.), `mitigation` (null, or the installed/already_blocked drop action).
 `logs/mitigations.jsonl`: one line per installed drop rule.
 
 ## 7. Shutdown
@@ -101,7 +103,9 @@ model is never used live. Instead a **reduced model** is trained on exactly the 
 
 ## 9. Known limitations
 - Live ML uses the reduced 11-feature model, trained on UNSW-NB15 only. Its scores on Mininet traffic are not well
-  separated (domain shift, §13), so the **rate rule is what actually stops the burst**; the ML score blocks alone only at >= 0.9.
+  separated (domain shift, §13): on the real run normal TCP scored up to 0.91 and the burst only 0.50. So ML alerts are
+  logged but **only the rate rule installs drop rules** by default; the burst is stopped by the rate rule.
+- The rate rule also blocks the reverse (ACK) direction of a burst, since ~1200 ACKs/s exceed 500 pps.
 - Mitigation is a coarse src->dst IPv4 drop with a 60 s hard timeout (no rate-limiting, no per-port granularity, no allow-list).
 - A flow entry aggregates all connections between two hosts for one IP protocol, unlike one UNSW row per connection.
 - Weak per-class results for Analysis/Backdoor/DoS.
@@ -109,17 +113,23 @@ model is never used live. Instead a **reduced model** is trained on exactly the 
 - OS-Ken 3.0.2 pulls in deprecated eventlet (a warning is printed; harmless).
 
 ## 10. What was tested
-Executed here (`python -m pytest -q tests` → 15 passed): dataset schema/NaN/target checks, leak-free feature set,
+Executed here (`python -m pytest -q tests` → 16 passed): dataset schema/NaN/target checks, leak-free feature set,
 reproducible disjoint stratified split, small train → joblib reload → predict consistency, missing-feature and
 missing-file errors, saved-model metrics match metrics.json; controller import/handlers, feature derivation, JSONL logging;
 and a **real `osken-manager` process against a scripted fake OpenFlow 1.3 switch** (handshake, table-miss flow-mod,
 packet-in→packet-out, periodic flow-stats request); live-feature definitions; fwd/rev pairing; ML alert; rate rule →
 exactly one priority-100 drop FlowMod with hard timeout, `already_blocked` on later polls, mitigation log; live model
 load/score and missing-model fallback; the controller logs `Live model loaded` under `osken-manager`.
-A Mininet/OVS run (earlier version of the controller, no detection) was done on 2026-10-15 — see the first records of
-`logs/flow_stats.jsonl`. **Not re-executed after adding detection/mitigation (needs sudo):** please run §5 before the
-evaluation and check that the drop rule appears. If OVS counts GSO super-packets the pps may stay low, but the
-bytes/s rule (1 MB/s) still triggers on the burst (~MB/s) and not on normal traffic (~3 KB/s).
+**Real Mininet/OVS runs (all in `logs/`):**
+- `mininet_run0_telemetry_only/` — 2026-10-15, controller before detection (telemetry only).
+- `mininet_run1_ml_block/` — 2026-11-15, detection with ML allowed to block. The burst was blocked by the rate rule
+  (1,672 pkts/s, 2.45 MB/s, ML p=0.57), **but the ML also blocked a normal flow**: the reverse ACK flow 10.0.0.2->10.0.0.1
+  scored 0.92 (a false positive). This led to the change to make ML alert-only by default.
+- `mininet_run2_final/` — 2026-11-15, final controller (`mininet_run2_output.txt` is the Mininet terminal output):
+  pingAll 0% loss; normal h1->h2 sent all 120 messages, never blocked (one ML alert at p=0.91, logged only);
+  burst h1->h3 detected at 1,197 pkts/s / 1.75 MB/s (ML p=0.50) and blocked after 6.1 s; afterwards
+  `ping 10.0.0.3` 100% loss, `ping 10.0.0.2` 0% loss; `dump-flows` shows
+  `priority=100,ip,nw_src=10.0.0.1,nw_dst=10.0.0.3 actions=drop` (hard_timeout=60) and its reverse.
 
 ## 11. Presentation script
 1. **SDN** separates the control plane (controller) from the data plane (switches); the controller programs flow rules
@@ -135,10 +145,11 @@ bytes/s rule (1 MB/s) still triggers on the burst (~MB/s) and not on normal traf
 8. **Integration**: OpenFlow exposes only 11 of the UNSW features, so a reduced model is trained on exactly those
    (AUC 0.974, F1 0.897 on the held-out split). The controller pairs each flow with its reverse flow, scores it, and also
    applies a rate rule on per-interval packet/byte rates.
-9. **Mitigation**: a flagged src->dst pair gets an OpenFlow drop rule (priority 100, 60 s); the demo shows h1->h3 blocked,
-   h1->h2 still working.
-10. **Honesty**: the model is trained on UNSW, not Mininet; its live scores are weakly separated, so the rate rule does the
-   blocking and the ML score is logged as evidence. Next step: label Mininet-captured flows and fine-tune/calibrate.
+9. **Mitigation**: a flagged src->dst pair gets an OpenFlow drop rule (priority 100, 60 s). Real Mininet run: burst
+   detected at ~1,200 pkts/s and blocked after 6 s; h1->h3 then 100% loss, h1->h2 unaffected.
+10. **Honesty**: the model is trained on UNSW, not Mininet. Live, it scored normal TCP up to 0.91 and the burst 0.50, and when
+   allowed to block it caused a false positive. So ML is alert-only and the rate rule enforces. Next step: label
+   Mininet-captured flows and fine-tune/calibrate the model on them.
 
 ## 12. Showing the ML classification during the demo
 The full 40-feature model classifies **dataset flows only** (replay); live flows use the reduced model (§13).
@@ -169,11 +180,21 @@ With only 11 counter features it is nearly as good at attack-vs-normal as the 40
 does not identify the attack type.
 
 **Decision per IPv4 flow** (each poll): `ml_alert` = attack_prob >= 0.9; `rate_alert` = packets/s >= 500 or bytes/s >= 1,000,000,
-computed from the counter delta since the previous poll; both require >= 10 packets. `is_attack = ml_alert or rate_alert`.
+computed from the counter delta since the previous poll; both require >= 10 packets. `is_attack = ml_alert or rate_alert`
+(logged); `enforce = rate_alert or (ml_alert and SDN_ML_BLOCK=1)` (drop rule).
 If mitigation is on: FlowMod `priority=100, match(eth_type=IPv4, ipv4_src, ipv4_dst), no instructions` (drop),
 `hard_timeout=60`, installed once per pair until it expires.
 
-**Domain shift (measured):** on Mininet-like flows the live model gives about 0.5–0.6 to pings, normal TCP and burst TCP
-alike (normal TCP with its reverse flow ~0.49; reverse ACK flow ~0.20; burst ~0.58), i.e. it cannot separate them, which is
-why its standalone block threshold is 0.9 and the rate rule carries the live mitigation. Fixing this needs labelled
-Mininet captures for calibration/fine-tuning.
+**Domain shift (measured on the real Mininet run, `logs/mininet_run2_final/flow_stats.jsonl`):**
+
+| live flow | ML attack_prob range |
+|---|---|
+| ICMP pings (all pairs) | 0.60 – 0.68 |
+| normal TCP h1->h2 | 0.61 – 0.91 |
+| normal TCP reverse (ACKs) h2->h1 | 0.06 – 0.68 (0.92 in run 1 → false-positive block) |
+| burst TCP h1->h3 | 0.50 – 0.62 |
+| burst reverse (ACKs) h3->h1 | 0.16 – 0.29 |
+
+The model does not separate Mininet normal and burst traffic (the normal flow even scores higher), so it is used for
+alerting only, and the rate rule (burst ~1,200–1,700 pkts/s vs normal ~10 pkts/s) does the mitigation. Fixing this needs
+labelled Mininet captures for calibration/fine-tuning.

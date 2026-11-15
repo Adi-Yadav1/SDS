@@ -1,0 +1,65 @@
+*** Configuring hosts
+h1 h2 h3 
+*** Starting controller
+c0 
+*** Starting 1 switches
+s1 ...
+*** Ping: testing ping reachability
+h1 -> h2 h3 
+h2 -> h1 h3 
+h3 -> h1 h2 
+*** Results: 0% dropped (6/6 received)
+*** Stopping 1 controllers
+c0 
+*** Stopping 3 links
+...
+*** Stopping 1 switches
+s1 
+*** Stopping 3 hosts
+h1 h2 h3 
+*** Done
+
+*** Connectivity test (pingAll)
+*** pingAll packet loss: 0.0%
+*** (controller polls flow stats every 5s; traffic runs long enough to be logged)
+*** Generating safe local traffic h1 -> h2 (normal) and h1 -> h3 (burst)
+[normal] sent 120 messages / 24000 bytes to 10.0.0.2:5001 (planned 12s)
+
+[burst] connection stalled/blocked after 6.1s: TimeoutError('timed out')
+[burst] sent 1776 messages / 2486400 bytes to 10.0.0.3:5002 (planned 12s)
+
+*** Mitigation check: h1 -> h3 should now be blocked (drop rule), h1 -> h2 still works
+PING 10.0.0.3 (10.0.0.3) 56(84) bytes of data.
+
+--- 10.0.0.3 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 1028ms
+
+
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=0.487 ms
+64 bytes from 10.0.0.2: icmp_seq=2 ttl=64 time=0.110 ms
+
+--- 10.0.0.2 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1041ms
+rtt min/avg/max/mdev = 0.110/0.298/0.487/0.188 ms
+
+*** Switch flow table (look for priority=100 ... actions=drop):
+ cookie=0x0, duration=14.131s, table=0, n_packets=91, n_bytes=132550, hard_timeout=60, priority=100,ip,nw_src=10.0.0.1,nw_dst=10.0.0.3 actions=drop
+ cookie=0x0, duration=14.100s, table=0, n_packets=7, n_bytes=462, hard_timeout=60, priority=100,ip,nw_src=10.0.0.3,nw_dst=10.0.0.1 actions=drop
+ cookie=0x0, duration=28.424s, table=0, n_packets=0, n_bytes=0, idle_timeout=30, priority=1,arp,in_port="s1-eth2",dl_src=00:00:00:00:00:02,dl_dst=00:00:00:00:00:01 actions=output:"s1-eth1"
+ cookie=0x0, duration=28.412s, table=0, n_packets=1, n_bytes=42, idle_timeout=30, priority=1,arp,in_port="s1-eth3",dl_src=00:00:00:00:00:03,dl_dst=00:00:00:00:00:01 actions=output:"s1-eth1"
+ cookie=0x0, duration=28.400s, table=0, n_packets=1, n_bytes=42, idle_timeout=30, priority=1,arp,in_port="s1-eth3",dl_src=00:00:00:00:00:03,dl_dst=00:00:00:00:00:02 actions=output:"s1-eth2"
+ cookie=0x0, duration=23.169s, table=0, n_packets=0, n_bytes=0, idle_timeout=30, priority=1,arp,in_port="s1-eth2",dl_src=00:00:00:00:00:02,dl_dst=00:00:00:00:00:03 actions=output:"s1-eth3"
+ cookie=0x0, duration=23.169s, table=0, n_packets=0, n_bytes=0, idle_timeout=30, priority=1,arp,in_port="s1-eth1",dl_src=00:00:00:00:00:01,dl_dst=00:00:00:00:00:03 actions=output:"s1-eth3"
+ cookie=0x0, duration=28.422s, table=0, n_packets=2, n_bytes=196, idle_timeout=30, priority=1,icmp,in_port="s1-eth1",dl_dst=00:00:00:00:00:02,nw_src=10.0.0.1,nw_dst=10.0.0.2 actions=output:"s1-eth2"
+ cookie=0x0, duration=28.420s, table=0, n_packets=2, n_bytes=196, idle_timeout=30, priority=1,icmp,in_port="s1-eth2",dl_dst=00:00:00:00:00:01,nw_src=10.0.0.2,nw_dst=10.0.0.1 actions=output:"s1-eth1"
+ cookie=0x0, duration=28.411s, table=0, n_packets=1, n_bytes=98, idle_timeout=30, priority=1,icmp,in_port="s1-eth1",dl_dst=00:00:00:00:00:03,nw_src=10.0.0.1,nw_dst=10.0.0.3 actions=output:"s1-eth3"
+ cookie=0x0, duration=28.409s, table=0, n_packets=1, n_bytes=98, idle_timeout=30, priority=1,icmp,in_port="s1-eth3",dl_dst=00:00:00:00:00:01,nw_src=10.0.0.3,nw_dst=10.0.0.1 actions=output:"s1-eth1"
+ cookie=0x0, duration=28.398s, table=0, n_packets=1, n_bytes=98, idle_timeout=30, priority=1,icmp,in_port="s1-eth2",dl_dst=00:00:00:00:00:03,nw_src=10.0.0.2,nw_dst=10.0.0.3 actions=output:"s1-eth3"
+ cookie=0x0, duration=28.397s, table=0, n_packets=1, n_bytes=98, idle_timeout=30, priority=1,icmp,in_port="s1-eth3",dl_dst=00:00:00:00:00:02,nw_src=10.0.0.3,nw_dst=10.0.0.2 actions=output:"s1-eth2"
+ cookie=0x0, duration=27.317s, table=0, n_packets=123, n_bytes=32118, idle_timeout=30, priority=1,tcp,in_port="s1-eth1",dl_dst=00:00:00:00:00:02,nw_src=10.0.0.1,nw_dst=10.0.0.2 actions=output:"s1-eth2"
+ cookie=0x0, duration=27.314s, table=0, n_packets=121, n_bytes=7986, idle_timeout=30, priority=1,tcp,in_port="s1-eth2",dl_dst=00:00:00:00:00:01,nw_src=10.0.0.2,nw_dst=10.0.0.1 actions=output:"s1-eth1"
+ cookie=0x0, duration=15.187s, table=0, n_packets=1670, n_bytes=2446820, idle_timeout=30, priority=1,tcp,in_port="s1-eth1",dl_dst=00:00:00:00:00:03,nw_src=10.0.0.1,nw_dst=10.0.0.3 actions=output:"s1-eth3"
+ cookie=0x0, duration=15.181s, table=0, n_packets=1742, n_bytes=114972, idle_timeout=30, priority=1,tcp,in_port="s1-eth3",dl_dst=00:00:00:00:00:01,nw_src=10.0.0.3,nw_dst=10.0.0.1 actions=output:"s1-eth1"
+ cookie=0x0, duration=28.438s, table=0, n_packets=39, n_bytes=2978, priority=0 actions=CONTROLLER:65535
+

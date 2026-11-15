@@ -1,0 +1,99 @@
+/home/aditya_yadav/Data/Sem 7/SDS/Project/sdn-ml-attack-detection/.venv/lib/python3.14/site-packages/os_ken/lib/hub.py:160: EventletDeprecationWarning: 
+Eventlet is deprecated. It is currently being maintained in bugfix mode, and
+we strongly recommend against using it for new projects.
+
+If you are already using Eventlet, we recommend migrating to a different
+framework.  For more detail see
+https://eventlet.readthedocs.io/en/latest/asyncio/migration.html
+
+  import eventlet
+1 RLock(s) were not greened, to fix this error make sure you run eventlet.monkey_patch() before importing any other modules.
+loading app controller/sdn_controller.py
+loading app os_ken.controller.ofp_handler
+instantiating app controller/sdn_controller.py of SdnController
+Live model loaded: /home/aditya_yadav/Data/Sem 7/SDS/Project/sdn-ml-attack-detection/results/live_model.joblib
+SdnController started; poll=5.0s mitigation=True ml_threshold=0.90 ml_block=False rate_pps=500.0 rate_Bps=1000000.0 block=60s, logs in /home/aditya_yadav/Data/Sem 7/SDS/Project/sdn-ml-attack-detection/logs
+instantiating app os_ken.controller.ofp_handler of OFPHandler
+Switch features received: dpid=0000000000000001
+Datapath registered: dpid=0000000000000001
+dpid=0000000000000001: logged 11 flow(s)
+  00:00:00:00:00:02 ->00:00:00:00:00:01 pkts=0 bytes=0 dur=3.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:01 pkts=0 bytes=0 dur=3.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:02 pkts=0 bytes=0 dur=3.9s
+  10.0.0.1 ->10.0.0.2 pkts=1 bytes=98 dur=3.9s p_attack=0.6751 pps=0.25 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=1 bytes=98 dur=3.9s p_attack=0.6751 pps=0.25 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1 bytes=98 dur=3.9s p_attack=0.6751 pps=0.26 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1 bytes=98 dur=3.9s p_attack=0.6751 pps=0.26 -> normal
+  10.0.0.2 ->10.0.0.3 pkts=1 bytes=98 dur=3.9s p_attack=0.6751 pps=0.26 -> normal
+  10.0.0.3 ->10.0.0.2 pkts=1 bytes=98 dur=3.9s p_attack=0.6751 pps=0.26 -> normal
+  10.0.0.1 ->10.0.0.2 pkts=26 bytes=6716 dur=2.8s p_attack=0.9144 pps=9.2 -> ALERT(ml)
+  10.0.0.2 ->10.0.0.1 pkts=25 bytes=1650 dur=2.8s p_attack=0.6805 pps=8.86 -> normal
+dpid=0000000000000001: logged 13 flow(s)
+  00:00:00:00:00:02 ->00:00:00:00:00:01 pkts=0 bytes=0 dur=8.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:01 pkts=1 bytes=42 dur=8.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:02 pkts=1 bytes=42 dur=8.9s
+  00:00:00:00:00:02 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=3.7s
+  00:00:00:00:00:01 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=3.7s
+  10.0.0.1 ->10.0.0.2 pkts=1 bytes=98 dur=8.9s p_attack=0.6187 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=1 bytes=98 dur=8.9s p_attack=0.6187 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1 bytes=98 dur=8.9s p_attack=0.6187 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1 bytes=98 dur=8.9s p_attack=0.6187 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.3 pkts=1 bytes=98 dur=8.9s p_attack=0.6187 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.2 pkts=1 bytes=98 dur=8.9s p_attack=0.6187 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.2 pkts=78 bytes=20548 dur=7.8s p_attack=0.6222 pps=10.39 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=77 bytes=5082 dur=7.8s p_attack=0.0584 pps=10.39 -> normal
+MITIGATION: drop 10.0.0.1 -> 10.0.0.3 for 60s (reasons=rate, p=0.4973, pps=1197, Bps=1752602)
+MITIGATION: drop 10.0.0.3 -> 10.0.0.1 for 60s (reasons=rate, p=0.1646, pps=1206, Bps=79580)
+dpid=0000000000000001: logged 15 flow(s)
+  00:00:00:00:00:02 ->00:00:00:00:00:01 pkts=0 bytes=0 dur=13.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:01 pkts=1 bytes=42 dur=13.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:02 pkts=1 bytes=42 dur=13.9s
+  00:00:00:00:00:02 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=8.7s
+  00:00:00:00:00:01 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=8.7s
+  10.0.0.1 ->10.0.0.2 pkts=1 bytes=98 dur=13.9s p_attack=0.6026 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=1 bytes=98 dur=13.9s p_attack=0.6026 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1 bytes=98 dur=13.9s p_attack=0.6026 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1 bytes=98 dur=13.9s p_attack=0.6026 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.3 pkts=1 bytes=98 dur=13.9s p_attack=0.6026 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.2 pkts=1 bytes=98 dur=13.9s p_attack=0.6026 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.2 pkts=123 bytes=32118 dur=12.8s p_attack=0.6611 pps=9.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=121 bytes=7986 dur=12.8s p_attack=0.0895 pps=8.8 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=839 bytes=1228574 dur=0.7s p_attack=0.4973 pps=1196.86 -> ATTACK(rate)
+  10.0.0.3 ->10.0.0.1 pkts=838 bytes=55308 dur=0.7s p_attack=0.1646 pps=1205.76 -> ATTACK(rate)
+dpid=0000000000000001: logged 17 flow(s)
+  10.0.0.1 ->10.0.0.3 pkts=87 bytes=129422 dur=4.6s [DROP RULE]
+  10.0.0.3 ->10.0.0.1 pkts=5 bytes=330 dur=4.6s [DROP RULE]
+  00:00:00:00:00:02 ->00:00:00:00:00:01 pkts=0 bytes=0 dur=18.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:01 pkts=1 bytes=42 dur=18.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:02 pkts=1 bytes=42 dur=18.9s
+  00:00:00:00:00:02 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=13.7s
+  00:00:00:00:00:01 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=13.7s
+  10.0.0.1 ->10.0.0.2 pkts=1 bytes=98 dur=18.9s p_attack=0.6103 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=1 bytes=98 dur=18.9s p_attack=0.6103 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1 bytes=98 dur=18.9s p_attack=0.6103 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1 bytes=98 dur=18.9s p_attack=0.6103 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.3 pkts=1 bytes=98 dur=18.9s p_attack=0.6103 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.2 pkts=1 bytes=98 dur=18.9s p_attack=0.6103 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.2 pkts=123 bytes=32118 dur=17.8s p_attack=0.6607 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=121 bytes=7986 dur=17.8s p_attack=0.0885 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1670 bytes=2446820 dur=5.7s p_attack=0.5602 pps=166.15 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1742 bytes=114972 dur=5.7s p_attack=0.276 pps=180.75 -> normal
+dpid=0000000000000001: logged 17 flow(s)
+  10.0.0.1 ->10.0.0.3 pkts=88 bytes=130888 dur=9.6s [DROP RULE]
+  10.0.0.3 ->10.0.0.1 pkts=7 bytes=462 dur=9.6s [DROP RULE]
+  00:00:00:00:00:02 ->00:00:00:00:00:01 pkts=0 bytes=0 dur=23.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:01 pkts=1 bytes=42 dur=23.9s
+  00:00:00:00:00:03 ->00:00:00:00:00:02 pkts=1 bytes=42 dur=23.9s
+  00:00:00:00:00:02 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=18.7s
+  00:00:00:00:00:01 ->00:00:00:00:00:03 pkts=0 bytes=0 dur=18.7s
+  10.0.0.1 ->10.0.0.2 pkts=1 bytes=98 dur=23.9s p_attack=0.6003 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=1 bytes=98 dur=23.9s p_attack=0.6003 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1 bytes=98 dur=23.9s p_attack=0.6003 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1 bytes=98 dur=23.9s p_attack=0.6003 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.3 pkts=1 bytes=98 dur=23.9s p_attack=0.6003 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.2 pkts=1 bytes=98 dur=23.9s p_attack=0.6003 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.2 pkts=123 bytes=32118 dur=22.8s p_attack=0.6107 pps=0.0 -> normal
+  10.0.0.2 ->10.0.0.1 pkts=121 bytes=7986 dur=22.8s p_attack=0.0685 pps=0.0 -> normal
+  10.0.0.1 ->10.0.0.3 pkts=1670 bytes=2446820 dur=10.7s p_attack=0.6154 pps=0.0 -> normal
+  10.0.0.3 ->10.0.0.1 pkts=1742 bytes=114972 dur=10.7s p_attack=0.2933 pps=0.0 -> normal
+Datapath disconnected: dpid=0000000000000001

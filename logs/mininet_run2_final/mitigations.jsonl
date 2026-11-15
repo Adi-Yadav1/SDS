@@ -1,0 +1,2 @@
+{"timestamp": 1794763000.259179, "dpid": 1, "action": "drop", "status": "installed", "match": {"ipv4_src": "10.0.0.1", "ipv4_dst": "10.0.0.3"}, "priority": 100, "hard_timeout_s": 60, "reasons": ["rate"], "attack_prob": 0.4973, "interval_pps": 1196.86, "interval_Bps": 1752602.0}
+{"timestamp": 1794763000.259179, "dpid": 1, "action": "drop", "status": "installed", "match": {"ipv4_src": "10.0.0.3", "ipv4_dst": "10.0.0.1"}, "priority": 100, "hard_timeout_s": 60, "reasons": ["rate"], "attack_prob": 0.1646, "interval_pps": 1205.76, "interval_Bps": 79579.9}

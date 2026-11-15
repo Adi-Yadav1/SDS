@@ -7,8 +7,12 @@
    flow stats, scores each IPv4 flow with the live model + a volumetric rate rule, and installs an OpenFlow **drop rule**
    (60 s) for flagged src->dst pairs.
 
-Honest caveat: the live model is trained on UNSW-NB15, not Mininet traffic; its scores on Mininet flows are poorly
-separated, so in the demo the **rate rule** is what blocks the burst flow. See `EVALUATION_GUIDE.md` (§13).
+**Verified on a real Mininet/OVS run** (`logs/mininet_run2_final/`): the burst flow (~1,200 pkts/s) was detected and
+blocked after 6 s (h1->h3 100% ping loss afterwards), and normal traffic was never blocked.
+
+Honest caveat: the live model is trained on UNSW-NB15, not Mininet traffic. Live, it scored normal TCP up to 0.91 and
+the burst 0.50, so ML alerts are logged only and the **rate rule** installs the drop rules (`SDN_ML_BLOCK=1` lets ML
+block too). See `EVALUATION_GUIDE.md` §10 and §13.
 
 Quick start (from project root):
 

@@ -103,8 +103,22 @@ def test_rate_rule_triggers_drop_rule_once(tmp_path):
     assert rows[-1]["classification"]["reasons"] == ["active_drop_rule"]
 
 
-def test_ml_alert_and_reverse_flow_pairing(tmp_path):
-    """A model scoring >= threshold blocks on its own; the reverse flow fills dpkts/dbytes."""
+def test_ml_alert_is_logged_but_not_enforced_by_default(tmp_path):
+    class High:
+        def predict_proba(self, X):
+            import numpy as np
+            return np.array([[0.05, 0.95]])
+    app = _app(tmp_path, High())
+    dp = _RecDp()
+    app._log_flow_stats(1, [_stat(1, _ip("10.0.0.2", "10.0.0.1"), 3, 21, 1386)], dp)
+    c = json.loads(app.flow_log_path.read_text().splitlines()[0])["classification"]
+    assert c["ml_alert"] and c["is_attack"] and not c["enforce"] and dp.sent == []
+
+
+def test_ml_alert_and_reverse_flow_pairing(tmp_path, monkeypatch):
+    """With SDN_ML_BLOCK on, a model scoring >= threshold blocks on its own; reverse flow fills dpkts/dbytes."""
+    from controller import sdn_controller as sc
+    monkeypatch.setattr(sc, "ML_BLOCK", True)
     class Always:
         def predict_proba(self, X):
             assert list(X.columns) == __import__("ml.live_features", fromlist=["x"]).LIVE_FEATURES

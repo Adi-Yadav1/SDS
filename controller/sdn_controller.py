@@ -9,12 +9,13 @@ Every POLL_INTERVAL seconds it requests flow stats from each switch and, for eve
      src->dst IPv4 pair with a hard timeout, and logs the action.
 
 Detection policy (honest): the live model was trained on UNSW-NB15, not on Mininet traffic, and
-its scores on Mininet flows are not well separated (domain shift, see EVALUATION_GUIDE.md §13), so
-by default it only blocks on its own at a high score (SDN_ML_THRESHOLD=0.9). The rate rule is
-what reliably catches the high-rate 'burst' load. Every record says which signal fired.
+its scores on Mininet flows are not well separated (domain shift, see EVALUATION_GUIDE.md §13;
+normal ACK flows reached 0.92 on the real run). So ML alerts (score >= SDN_ML_THRESHOLD) are
+logged but only the rate rule installs drop rules, unless SDN_ML_BLOCK=1. Every record says
+which signal fired and whether it was enforced.
 
 Run:  osken-manager controller/sdn_controller.py
-Env:  SDN_LOG_DIR, SDN_POLL_INTERVAL (5), SDN_LIVE_MODEL, SDN_MITIGATION (1), SDN_ML_THRESHOLD (0.9),
+Env:  SDN_LOG_DIR, SDN_POLL_INTERVAL (5), SDN_LIVE_MODEL, SDN_MITIGATION (1), SDN_ML_THRESHOLD (0.9), SDN_ML_BLOCK (0),
       SDN_RATE_PPS (500), SDN_RATE_BPS (1000000), SDN_MIN_PKTS (10), SDN_BLOCK_SECONDS (60)
 """
 import json
@@ -40,6 +41,9 @@ POLL_INTERVAL = float(os.environ.get("SDN_POLL_INTERVAL", "5"))
 LIVE_MODEL = Path(os.environ.get("SDN_LIVE_MODEL", ROOT / "results" / "live_model.joblib"))
 MITIGATION = os.environ.get("SDN_MITIGATION", "1") not in ("0", "false", "no", "")
 ML_THRESHOLD = float(os.environ.get("SDN_ML_THRESHOLD", "0.9"))
+# ML alerts are logged always; they only install drop rules if SDN_ML_BLOCK=1 (off by default:
+# on the real Mininet run normal ACK flows scored up to 0.92 -> false-positive blocks).
+ML_BLOCK = os.environ.get("SDN_ML_BLOCK", "0") not in ("0", "false", "no", "")
 RATE_PPS = float(os.environ.get("SDN_RATE_PPS", "500"))
 RATE_BPS = float(os.environ.get("SDN_RATE_BPS", "1000000"))  # bytes/s (= 8 Mbit/s)
 MIN_PKTS = int(os.environ.get("SDN_MIN_PKTS", "10"))
@@ -91,9 +95,9 @@ class SdnController(app_manager.OSKenApp):
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         self._init_state(LOG_DIR, load_live_model(LIVE_MODEL, self.logger))
         self.monitor_thread = hub.spawn(self._monitor)
-        self.logger.info("SdnController started; poll=%ss mitigation=%s ml_threshold=%.2f "
+        self.logger.info("SdnController started; poll=%ss mitigation=%s ml_threshold=%.2f ml_block=%s "
                          "rate_pps=%s rate_Bps=%s block=%ss, logs in %s", POLL_INTERVAL, MITIGATION,
-                         ML_THRESHOLD, RATE_PPS, RATE_BPS, BLOCK_SECONDS, LOG_DIR)
+                         ML_THRESHOLD, ML_BLOCK, RATE_PPS, RATE_BPS, BLOCK_SECONDS, LOG_DIR)
 
     def _init_state(self, log_dir, model):
         self.mac_to_port = {}
@@ -214,12 +218,13 @@ class SdnController(app_manager.OSKenApp):
         ml_alert = bool(prob is not None and enough and prob >= ML_THRESHOLD)
         rate_alert = bool(enough and (pps >= RATE_PPS or bps >= RATE_BPS))
         reasons = [r for r, on in (("ml", ml_alert), ("rate", rate_alert)) if on]
+        enforce = rate_alert or (ml_alert and ML_BLOCK)
         return {
             "model": "live_rf" if prob is not None else None,
             "attack_prob": None if prob is None else round(prob, 4),
             "ml_threshold": ML_THRESHOLD, "ml_alert": ml_alert,
             "interval_pps": round(pps, 2), "interval_Bps": round(bps, 1), "rate_alert": rate_alert,
-            "is_attack": bool(reasons), "reasons": reasons,
+            "is_attack": bool(reasons), "reasons": reasons, "enforce": bool(enforce),
             "unsw_features": {k: (round(v, 3) if isinstance(v, float) else v) for k, v in feats.items()},
         }
 
@@ -268,7 +273,7 @@ class SdnController(app_manager.OSKenApp):
             elif prio == PRIO_FORWARD and "ipv4_src" in m and "ip_proto" in m:
                 key = (m["ipv4_src"], m["ipv4_dst"], int(m["ip_proto"]))
                 cls = self._classify(dpid, key, ts, ip_flows[key], ip_flows)
-                if cls["is_attack"]:
+                if cls["enforce"]:
                     mit = self._mitigate(dp, dpid, key[0], key[1], cls, ts)
             records.append({
                 "timestamp": ts, "time_iso": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(ts)),
@@ -288,7 +293,7 @@ class SdnController(app_manager.OSKenApp):
                 tag = " [DROP RULE]"
             elif "attack_prob" in c or "rate_alert" in c:
                 tag = (f" p_attack={c.get('attack_prob')} pps={c.get('interval_pps')}"
-                       f" -> {'ATTACK(' + ','.join(c['reasons']) + ')' if c['is_attack'] else 'normal'}")
+                       f" -> {('ATTACK' if c['enforce'] else 'ALERT') + '(' + ','.join(c['reasons']) + ')' if c['is_attack'] else 'normal'}")
             self.logger.info("  %s %s pkts=%d bytes=%d dur=%.1fs%s",
                              r["match"].get("ipv4_src", r["match"].get("eth_src", "?")),
                              "->" + r["match"].get("ipv4_dst", r["match"].get("eth_dst", "?")),
